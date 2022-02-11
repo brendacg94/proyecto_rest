@@ -16,11 +16,11 @@ class UsuarioManager(BaseUserManager):
         )
 
         # Encripta la contraseña y la guarda en ese mismo campo
-        usuario.set_password(password)
-        usuario.save()
+        usuario.set_password(usuario.password)
+        usuario.save(using=self._db)
         return usuario 
 
-    def create_superuser(self,email,names,last_names,password):
+    def create_superuser(self,email,names,last_names,password = None):
         usuario = self.create_user(
             email, 
             names = names, 
@@ -29,7 +29,7 @@ class UsuarioManager(BaseUserManager):
         )
 
         usuario.admin_user = True
-        usuario.save()
+        usuario.save(using=self._db)
         return usuario 
 
 class Usuario(AbstractBaseUser):
