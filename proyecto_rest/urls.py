@@ -19,6 +19,4 @@ from django.urls import path,include
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('users/', include('users.routers')),
-    path('banks/', include('Bank.routers')),
-    path('bank_accounts/', include('Bank_account.routers')),
 ]
