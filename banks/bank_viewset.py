@@ -30,6 +30,24 @@ class BankViewSet(viewsets.ViewSet):
             })
 
         return Response(result, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['get'], url_path = 'listaccounts', url_name = 'listaccounts')
+    def list_accounts(self, request):
+        accounts = Bank_account.objects.all().select_related("id_user","id_bank")
+        result = { "accounts": list() }
+        for acc in accounts:
+            result["accounts"].append({
+                "account_number": acc.account_number,
+                "balance": acc.balance,
+                "account_type": acc.account_type,
+                "user_name": acc.id_user.names,
+                "user_last_names": acc.id_user.last_names,
+                "bank_name": acc.id_bank.name
+            })
+
+        return Response(result, status = status.HTTP_200_OK)
+
+
      
      
             
