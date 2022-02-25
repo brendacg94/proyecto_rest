@@ -1,6 +1,6 @@
 from banks.models import *
 from users.models import Usuario
-#from users.serializers import UserSerializer
+from banks.serializers import BankAccountSerializer
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -31,6 +31,25 @@ class BankViewSet(viewsets.ViewSet):
 
         return Response(result, status = status.HTTP_200_OK)
 
+    @action(detail=False, methods=['get'], url_path='accountdetail', url_name='accountdetail')
+    def account_detail(self, request):
+        id_account = request.query_params.get("id_account")
+        account = Bank_account.objects.filter(id=id_account).first()
+
+        if not account:
+            return Response({'message': 'No existe la cuenta con id ' + id_account}, status = status.HTTP_404_NOT_FOUND)
+       
+        result = { 
+                "account_number": account.account_number,
+                "balance": account.balance,
+                "account_type": account.account_type,
+                "user_name": account.id_user.names,
+                "user_last_names": account.id_user.last_names,
+                "bank_name": account.id_bank.name
+        }
+    
+        return Response(result, status = status.HTTP_200_OK)
+        
     @action(detail = False, methods = ['get'], url_path = 'listaccounts', url_name = 'listaccounts')
     def list_accounts(self, request):
         accounts = Bank_account.objects.all().select_related("id_user","id_bank")
@@ -46,6 +65,15 @@ class BankViewSet(viewsets.ViewSet):
             })
 
         return Response(result, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['post'], url_path = 'createaccount', url_name = 'createaccount')
+    def create_account(self, request):
+        account_serializer = BankAccountSerializer(data = request.data)
+        if account_serializer.is_valid():
+            account_serializer.save()
+            return Response({'message':'Cuenta registrada correctamente'},status = status.HTTP_201_CREATED)
+        return Response({'message':'Hay errores en la información enviada'},status = status.HTTP_400_BAD_REQUEST)
+
 
 
      
