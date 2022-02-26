@@ -1,6 +1,6 @@
 from banks.models import *
 from users.models import Usuario
-from banks.serializers import BankAccountSerializer
+from banks.serializers import BankAccountSerializer, BankSerializer
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -90,7 +90,54 @@ class BankViewSet(viewsets.ViewSet):
 
     #BANK 
 
+    @action(detail = False, methods = ['get'], url_path = 'bankdetail', url_name = 'bankdetail')
+    def bank_detail(self, request):
+        id_bank = request.query_params.get("id_bank")
+        bank = Bank.objects.filter(id=id_bank).first()
+
+        if not bank:
+            return Response({'message': 'No existe el banco con id ' + id_bank}, status = status.HTTP_404_NOT_FOUND)
+       
+        result = { 
+                "id": bank.id,
+                "name": bank.name
+        }
     
+        return Response(result, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['get'], url_path = 'listbanks', url_name = 'listbanks')
+    def list_banks(self, request):
+        banks = Bank.objects.all()
+
+        result = { "banks": list() }
+        for ban in banks:
+            result["banks"].append({
+                "id": ban.id,
+                "name": ban.name
+            })
+
+        return Response(result, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['post'], url_path = 'createbank', url_name = 'createbank')
+    def create_bank(self, request):
+        bank_serializer = BankSerializer(data = request.data)
+        
+        if bank_serializer.is_valid():
+            bank_serializer.save()
+            return Response({'message':'Banco registrado correctamente'},status = status.HTTP_201_CREATED)
+        return Response({'message':'Hay errores en la información enviada'},status = status.HTTP_400_BAD_REQUEST)
+
+    @action(detail = False, methods = ['delete'], url_path = 'deletebank', url_name = 'deletebank')
+    def delete_bank(self, request):
+        id_bank = request.query_params.get("id_bank")
+        bank = Bank.objects.filter(id=id_bank).first()
+        
+        if bank:
+            bank.delete()
+            return Response({'message':'Banco eliminado correctamente'},status = status.HTTP_200_OK)
+        return Response({'error':'No existe un banco con id ' + id_bank},status = status.HTTP_400_BAD_REQUEST)
+
+
 
      
 
