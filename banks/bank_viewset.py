@@ -8,7 +8,9 @@ from rest_framework.decorators import action
 
 class BankViewSet(viewsets.ViewSet):
 
-    @action(detail=False, methods=['get'], url_path='useraccounts', url_name='useraccounts')
+    #BANK ACCOUNT
+
+    @action(detail = False, methods = ['get'], url_path = 'useraccounts', url_name = 'useraccounts')
     def user_accounts(self, request):
         id_user = request.query_params.get("id_user")
         try:
@@ -31,7 +33,7 @@ class BankViewSet(viewsets.ViewSet):
 
         return Response(result, status = status.HTTP_200_OK)
 
-    @action(detail=False, methods=['get'], url_path='accountdetail', url_name='accountdetail')
+    @action(detail = False, methods = ['get'], url_path = 'accountdetail', url_name = 'accountdetail')
     def account_detail(self, request):
         id_account = request.query_params.get("id_account")
         account = Bank_account.objects.filter(id=id_account).first()
@@ -56,6 +58,7 @@ class BankViewSet(viewsets.ViewSet):
         result = { "accounts": list() }
         for acc in accounts:
             result["accounts"].append({
+                "id": acc.id,
                 "account_number": acc.account_number,
                 "balance": acc.balance,
                 "account_type": acc.account_type,
@@ -69,14 +72,27 @@ class BankViewSet(viewsets.ViewSet):
     @action(detail = False, methods = ['post'], url_path = 'createaccount', url_name = 'createaccount')
     def create_account(self, request):
         account_serializer = BankAccountSerializer(data = request.data)
+        
         if account_serializer.is_valid():
             account_serializer.save()
             return Response({'message':'Cuenta registrada correctamente'},status = status.HTTP_201_CREATED)
         return Response({'message':'Hay errores en la información enviada'},status = status.HTTP_400_BAD_REQUEST)
 
+    @action(detail = False, methods = ['delete'], url_path = 'deleteaccount', url_name = 'deleteaccount')
+    def delete_account(self, request):
+        id_account = request.query_params.get("id_account")
+        account = Bank_account.objects.filter(id=id_account).first()
+        
+        if account:
+            account.delete()
+            return Response({'message':'Cuenta eliminada correctamente'},status = status.HTTP_200_OK)
+        return Response({'error':'No existe una cuenta con id ' + id_account},status = status.HTTP_400_BAD_REQUEST)
 
+    #BANK 
+
+    
 
      
-     
+
             
         
