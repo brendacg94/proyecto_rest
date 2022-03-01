@@ -20,6 +20,36 @@ class BankViewSet(viewsets.ViewSet):
             return Response({'message': 'No existe el usuario con id ' + id_user}, status = status.HTTP_404_NOT_FOUND)
 
         accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank")
+        if not accounts:
+            return Response({'message': 'No tiene cuentas asignadas '}, status = status.HTTP_404_NOT_FOUND)
+           
+        result = { "accounts": list() }
+        for acc in accounts:
+            result["accounts"].append({
+                "account_number": acc.account_number,
+                "balance": acc.balance,
+                "account_type": acc.account_type,
+                "user_name": acc.id_user.names,
+                "user_last_names": acc.id_user.last_names,
+                "bank_name": acc.id_bank.name
+            })
+
+        return Response(result, status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['get','post'], url_path = 'bodyuseraccounts', url_name = 'bodyuseraccounts')
+    def body_user_accounts(self, request):
+        #id_user = request.query_params.get("id_user")
+        id_user = str(request.data['id_user'])
+        try:
+            saved_user = Usuario.objects.get(pk=id_user)
+        except Usuario.DoesNotExist as e:
+            print(e)
+            return Response({'message': 'No existe el usuario con id ' + id_user}, status = status.HTTP_404_NOT_FOUND)
+
+        accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank")
+        if not accounts:
+            return Response({'message': 'No tiene cuentas asignadas '}, status = status.HTTP_404_NOT_FOUND)
+           
         result = { "accounts": list() }
         for acc in accounts:
             result["accounts"].append({
@@ -136,6 +166,8 @@ class BankViewSet(viewsets.ViewSet):
             bank.delete()
             return Response({'message':'Banco eliminado correctamente'},status = status.HTTP_200_OK)
         return Response({'error':'No existe un banco con id ' + id_bank},status = status.HTTP_400_BAD_REQUEST)
+
+    
 
 
 
