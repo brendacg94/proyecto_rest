@@ -6,6 +6,10 @@ class UserSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = '__all__'
 
+    #email = serializers.EmailField(required = True)
+    #names = serializers.CharField(max_length = 255, required = True)
+    #last_names = serializers.CharField(max_length = 255, required = True)
+
     def create(self,validated_data):
         user = Usuario(**validated_data)
         user.set_password(validated_data['password'])

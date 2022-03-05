@@ -45,6 +45,26 @@ class UserViewSet(viewsets.ViewSet):
             return Response(user_serializer.data,status = status.HTTP_201_CREATED)
         return Response(user_serializer.errors,status = status.HTTP_400_BAD_REQUEST)
 
+    @action(detail = False, methods = ['post'], url_path = 'createuser', url_name = 'createuser')
+    def create_user(self, request):
+        serializer = UserSerializer(data = request.data)
+        
+        if not serializer.is_valid():
+            return Response({'message':'Hay errores en la información enviada'},
+                            status = status.HTTP_400_BAD_REQUEST)
+
+        #account_number = request.data['account_number']
+        #account = Bank_account.objects.filter(account_number=account_number)
+
+        #account_type = account_serializer.validated_data.get("account_type")
+        #print(account_type)
+
+        #if account.exists():
+            #return Response({'message':'Este numero de cuenta ya se ha registrado'},
+                            #status = status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message':'Prueba'},status = status.HTTP_200_OK)
+
     def update(self,request,pk=None):
         user = Usuario.objects.filter(id = pk).first()
         user_serializer = UserSerializer(user,data = request.data)
