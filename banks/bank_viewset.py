@@ -1,6 +1,6 @@
 from banks.models import Bank, Bank_account, Movement
 from users.models import Usuario
-from banks.serializers import BankAccountSerializer, BankSerializer
+from banks.serializers import BankAccountSerializer, BankSerializer, MovementSerializer
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -262,16 +262,53 @@ class BankViewSet(viewsets.ViewSet):
             print(e)
             return Response({'message': 'No existe la cuenta de banco con id ' + bank_account}, 
                             status = status.HTTP_404_NOT_FOUND)
-    
-        #account = Bank_account(
-            #account_number = account_serializer.validated_data.get("account_number"),
-            #account_type = account_serializer.validated_data.get("account_type"),
-            #id_user = account_serializer.validated_data.get("id_user"),
-            #id_bank = account_serializer.validated_data.get("id_bank")
-        #)
-        #account.save()
 
-        return Response({'message': 'Prueba'},status = status.HTTP_200_OK)
+        balance = saved_bank_account.balance
+        print(balance)
+        quantity = serializer.validated_data.get("quantity")
+        movement_type = serializer.validated_data.get("movement_type")
+
+
+        if movement_type == 'Deposito':
+            balance = balance + quantity
+            print(balance)
+
+            saved_bank_account.balance = balance
+            saved_bank_account.save()
+    
+            new_movement = Movement(
+                quantity = serializer.validated_data.get("quantity"),
+                movement_type = serializer.validated_data.get("movement_type"),
+                bank_account = saved_bank_account
+            )
+            new_movement.save()
+
+        elif movement_type == 'Retiro':
+            if balance < quantity:
+                 return Response({'message':'Tu cuenta tiene insuficientes fondos para realizar esta operación'},
+                            status = status.HTTP_400_BAD_REQUEST)
+
+            balance = balance - quantity
+            print(balance)
+
+            saved_bank_account.balance = balance
+            saved_bank_account.save()
+    
+            new_movement = Movement(
+                quantity = serializer.validated_data.get("quantity"),
+                movement_type = serializer.validated_data.get("movement_type"),
+                bank_account = saved_bank_account
+            )
+            new_movement.save()
+
+        result = { 
+                "quantity": request.data['quantity'],
+                "movement_type": request.data['movement_type'],
+                "bank_account": saved_bank_account.account_number,
+                "balance": balance
+        }
+
+        return Response(result,status = status.HTTP_200_OK)
 
 
 
