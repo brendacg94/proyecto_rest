@@ -310,6 +310,32 @@ class BankViewSet(viewsets.ViewSet):
 
         return Response(result,status = status.HTTP_200_OK)
 
+    @action(detail = False, methods = ['get'], url_path = 'movementhistory', url_name = 'movementhistory')
+    def movement_history(self, request):
+        id_account = request.query_params.get("id_account")
+        try:
+            saved_account = Bank_account.objects.get(pk=id_account)
+        except Bank_account.DoesNotExist as e:
+            print(e)
+            return Response({'message': 'No existe la cuenta de banco con id ' + id_account}, 
+                            status = status.HTTP_404_NOT_FOUND)
+
+        movements = Movement.objects.filter(bank_account=saved_account).select_related("bank_account")
+        if not movements:
+            return Response({'message': 'Esta cuenta de banco no tiene movimientos registrados'}, 
+                            status = status.HTTP_404_NOT_FOUND)
+           
+        result = { "movements": list() }
+        for mov in movements:
+            result["movements"].append({
+                "quantity": mov.quantity,
+                "creation_movement": mov.creation_movement,
+                "movement_type": mov.movement_type,
+                "bank_account": mov.bank_account.account_number
+            })
+
+        return Response(result, status = status.HTTP_200_OK)
+
 
 
     
