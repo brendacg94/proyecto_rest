@@ -1,4 +1,4 @@
-from banks.models import Bank, Account_type, Bank_account, Movement
+from banks.models import Bank, Account_type, Bank_account, Movement_type, Movement
 from users.models import Usuario
 from banks.serializers import BankAccountSerializer, BankSerializer, MovementSerializer
 from rest_framework import status
@@ -264,6 +264,15 @@ class BankViewSet(viewsets.ViewSet):
             return Response({'message':'Hay errores en la información enviada'},
                             status = status.HTTP_400_BAD_REQUEST)
 
+        movement_type = str(serializer.validated_data.get("movement_type"))
+
+        try:
+            saved_movement_type = Movement_type.objects.get(pk=movement_type)
+        except Movement_type.DoesNotExist as e:
+            print(e)
+            return Response({'message': 'No existe el tipo de movimmiento con id ' + movement_type}, 
+                            status = status.HTTP_404_NOT_FOUND)
+
         bank_account = str(serializer.validated_data.get("bank_account"))
 
         try:
@@ -279,7 +288,7 @@ class BankViewSet(viewsets.ViewSet):
         movement_type = serializer.validated_data.get("movement_type")
 
 
-        if movement_type == 'Deposito':
+        if movement_type == 1:
             balance = balance + quantity
             print(balance)
 
@@ -288,12 +297,12 @@ class BankViewSet(viewsets.ViewSet):
     
             new_movement = Movement(
                 quantity = serializer.validated_data.get("quantity"),
-                movement_type = serializer.validated_data.get("movement_type"),
+                movement_type = saved_movement_type,
                 bank_account = saved_bank_account
             )
             new_movement.save()
 
-        elif movement_type == 'Retiro':
+        elif movement_type == 2:
             if balance < quantity:
                  return Response({'message':'Tu cuenta tiene insuficientes fondos para realizar esta operación'},
                             status = status.HTTP_400_BAD_REQUEST)
@@ -306,14 +315,14 @@ class BankViewSet(viewsets.ViewSet):
     
             new_movement = Movement(
                 quantity = serializer.validated_data.get("quantity"),
-                movement_type = serializer.validated_data.get("movement_type"),
+                movement_type = saved_movement_type,
                 bank_account = saved_bank_account
             )
             new_movement.save()
 
         result = { 
                 "quantity": request.data['quantity'],
-                "movement_type": request.data['movement_type'],
+                "movement_type": saved_movement_type.name,
                 "bank_account": saved_bank_account.account_number,
                 "balance": balance
         }
@@ -330,7 +339,7 @@ class BankViewSet(viewsets.ViewSet):
             return Response({'message': 'No existe la cuenta de banco con id ' + id_account}, 
                             status = status.HTTP_404_NOT_FOUND)
 
-        movements = Movement.objects.filter(bank_account=saved_account).select_related("bank_account")
+        movements = Movement.objects.filter(bank_account=saved_account).select_related("movement_type","bank_account")
         if not movements:
             return Response({'message': 'Esta cuenta de banco no tiene movimientos registrados'}, 
                             status = status.HTTP_404_NOT_FOUND)
@@ -340,7 +349,7 @@ class BankViewSet(viewsets.ViewSet):
             result["movements"].append({
                 "quantity": mov.quantity,
                 "creation_movement": mov.creation_movement,
-                "movement_type": mov.movement_type,
+                "movement_type": mov.movement_type.name,
                 "bank_account": mov.bank_account.account_number
             })
 

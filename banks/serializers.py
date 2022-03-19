@@ -15,5 +15,6 @@ class BankSerializer(serializers.Serializer):
 
 class MovementSerializer(serializers.Serializer):
     quantity = serializers.DecimalField(max_digits=10, decimal_places=2, required = True)
-    movement_type = serializers.CharField(max_length = 255, required = True)
+    #movement_type = serializers.CharField(max_length = 255, required = True)
+    movement_type = serializers.IntegerField(required = True)
     bank_account = serializers.IntegerField(required = True)
