@@ -14,20 +14,33 @@ class Bank(models.Model):
     def __str__(self):
         return self.name
 
+class Account_type(models.Model):
+    id = models.AutoField(primary_key = True)
+    name = models.CharField('Nombre', max_length = 255, blank = False, null = False)
+
+    class Meta:
+        verbose_name = 'Tipo de cuenta'
+        verbose_name_plural = 'Tipo de cuentas'
+
+    def __str__(self):
+        return self.name
+
 class Bank_account(models.Model):
     id = models.AutoField(primary_key = True)
-    account_number = models.CharField('Número de cuenta', max_length = 255, unique = True, blank = False, null = False)
+    #account_number = models.CharField('Número de cuenta', max_length = 255, unique = True, blank = False, null = False)
+    account_number = models.BigIntegerField('Número de cuenta', unique = True, blank = False, null = False)
     balance = models.DecimalField('Saldo', max_digits=10, decimal_places=2, default = 0)
-    account_type = models.CharField('Tipo de cuenta', max_length = 255, blank = False, null = False)
+    #account_type = models.CharField('Tipo de cuenta', max_length = 255, blank = False, null = False)
     id_user = models.ForeignKey(Usuario, related_name='bankaccounts', on_delete=models.CASCADE, verbose_name = 'Usuario')
     id_bank = models.ForeignKey(Bank, related_name = 'banks', on_delete=models.CASCADE, verbose_name = 'Banco')
+    id_account_type = models.ForeignKey(Account_type, related_name = 'accounts_type', on_delete=models.CASCADE, verbose_name = 'Tipo de cuenta')
 
     class Meta:
         verbose_name = 'Cuenta de Banco'
         verbose_name_plural = 'Cuentas de Banco'
 
     def __str__(self):
-        return f'{self.account_number},{self.balance},{self.account_type}'
+        return f'{self.account_number},{self.balance}'
 
 class Movement(models.Model):
     id = models.AutoField(primary_key = True)
@@ -42,3 +55,5 @@ class Movement(models.Model):
 
     def __str__(self):
         return f'{self.quantity},{self.movement_type}'
+
+

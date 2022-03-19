@@ -1,4 +1,4 @@
-from banks.models import Bank, Bank_account, Movement
+from banks.models import Bank, Account_type, Bank_account, Movement
 from users.models import Usuario
 from banks.serializers import BankAccountSerializer, BankSerializer, MovementSerializer
 from rest_framework import status
@@ -19,7 +19,7 @@ class BankViewSet(viewsets.ViewSet):
             print(e)
             return Response({'message': 'No existe el usuario con id ' + id_user}, status = status.HTTP_404_NOT_FOUND)
 
-        accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank")
+        accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank","id_account_type")
         if not accounts:
             return Response({'message': 'No tiene cuentas asignadas '}, status = status.HTTP_404_NOT_FOUND)
            
@@ -28,7 +28,7 @@ class BankViewSet(viewsets.ViewSet):
             result["accounts"].append({
                 "account_number": acc.account_number,
                 "balance": acc.balance,
-                "account_type": acc.account_type,
+                "account_type": acc.id_account_type.name,
                 "user_name": acc.id_user.names,
                 "user_last_names": acc.id_user.last_names,
                 "bank_name": acc.id_bank.name
@@ -46,7 +46,7 @@ class BankViewSet(viewsets.ViewSet):
             print(e)
             return Response({'message': 'No existe el usuario con id ' + id_user}, status = status.HTTP_404_NOT_FOUND)
 
-        accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank")
+        accounts = Bank_account.objects.filter(id_user=saved_user).select_related("id_user","id_bank","id_account_type")
         if not accounts:
             return Response({'message': 'No tiene cuentas asignadas '}, status = status.HTTP_404_NOT_FOUND)
            
@@ -55,7 +55,7 @@ class BankViewSet(viewsets.ViewSet):
             result["accounts"].append({
                 "account_number": acc.account_number,
                 "balance": acc.balance,
-                "account_type": acc.account_type,
+                "account_type": acc.id_account_type.name,
                 "user_name": acc.id_user.names,
                 "user_last_names": acc.id_user.last_names,
                 "bank_name": acc.id_bank.name
@@ -74,7 +74,7 @@ class BankViewSet(viewsets.ViewSet):
         result = { 
                 "account_number": account.account_number,
                 "balance": account.balance,
-                "account_type": account.account_type,
+                "account_type": account.id_account_type.name,
                 "user_name": account.id_user.names,
                 "user_last_names": account.id_user.last_names,
                 "bank_name": account.id_bank.name
@@ -84,14 +84,14 @@ class BankViewSet(viewsets.ViewSet):
         
     @action(detail = False, methods = ['get'], url_path = 'listaccounts', url_name = 'listaccounts')
     def list_accounts(self, request):
-        accounts = Bank_account.objects.all().select_related("id_user","id_bank")
+        accounts = Bank_account.objects.all().select_related("id_user","id_bank","id_account_type")
         result = { "accounts": list() }
         for acc in accounts:
             result["accounts"].append({
                 "id": acc.id,
                 "account_number": acc.account_number,
                 "balance": acc.balance,
-                "account_type": acc.account_type,
+                "account_type": acc.id_account_type.name,
                 "user_name": acc.id_user.names,
                 "user_last_names": acc.id_user.last_names,
                 "bank_name": acc.id_bank.name
@@ -136,11 +136,21 @@ class BankViewSet(viewsets.ViewSet):
             return Response({'message': 'No existe el banco con id ' + id_bank}, 
                             status = status.HTTP_404_NOT_FOUND)
 
+        id_account_type = str(account_serializer.validated_data.get("id_account_type"))
+
+        try:
+            saved_account_type = Account_type.objects.get(pk=id_account_type)
+        except Account_type.DoesNotExist as e:
+            print(e)
+            return Response({'message': 'No existe el tipo de cuenta con id ' + id_account_type}, 
+                            status = status.HTTP_404_NOT_FOUND)
+
         account = Bank_account(
             account_number = account_serializer.validated_data.get("account_number"),
-            account_type = account_serializer.validated_data.get("account_type"),
+            #account_type = account_serializer.validated_data.get("account_type"),
             id_user = saved_user,
-            id_bank = saved_bank
+            id_bank = saved_bank,
+            id_account_type = saved_account_type
         )
         account.save()
 
