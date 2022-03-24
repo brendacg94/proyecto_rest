@@ -53,14 +53,16 @@ class UserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal info', {'fields': ('names','last_names')}),
-        ('Permissions', {'fields': ('admin_user',)}),
+        ('Permissions', {'fields': ('admin_user','groups', 'user_permissions')}),
+        #('Permisos', {'fields': ('groups', 'user_permissions' )}),
     )
     
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'names','last_names', 'password1', 'password2'),
-        }),
+            'fields': ('email', 'password1', 'password2')}),
+            ('Personal info', {'fields': ('names','last_names')}),
+            ('Permissions', {'fields': ('admin_user','groups', 'user_permissions')}),   
     )
     search_fields = ('email',)
     ordering = ('email',)
@@ -68,5 +70,7 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.register(Usuario, UserAdmin)
 admin.site.unregister(Group)
+admin.site.register(Group)
 admin.site.register(Permission)
+
 

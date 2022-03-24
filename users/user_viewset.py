@@ -1,5 +1,6 @@
 from users.models import Usuario
-from users.serializers import UserSerializer
+from users.serializers import UserSerializer, UserUpdateSerializer
+from django.contrib.auth.hashers import make_password
 from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.response import Response
@@ -38,13 +39,6 @@ class UserViewSet(viewsets.ViewSet):
 
         return Response(result, status = status.HTTP_200_OK)
 
-    def create(self,request):
-        user_serializer = UserSerializer(data = request.data)
-        if user_serializer.is_valid():
-            user_serializer.save()
-            return Response(user_serializer.data,status = status.HTTP_201_CREATED)
-        return Response(user_serializer.errors,status = status.HTTP_400_BAD_REQUEST)
-
     @action(detail = False, methods = ['post'], url_path = 'createuser', url_name = 'createuser')
     def create_user(self, request):
         serializer = UserSerializer(data = request.data)
@@ -53,25 +47,67 @@ class UserViewSet(viewsets.ViewSet):
             return Response({'message':'Hay errores en la información enviada'},
                             status = status.HTTP_400_BAD_REQUEST)
 
-        #account_number = request.data['account_number']
-        #account = Bank_account.objects.filter(account_number=account_number)
+        email = serializer.validated_data.get("email")
+        user = Usuario.objects.filter(email=email)
 
-        #account_type = account_serializer.validated_data.get("account_type")
-        #print(account_type)
+        if user.exists():
+            return Response({'message':'Este correo electrónico ya se ha registrado'},
+                            status = status.HTTP_400_BAD_REQUEST)
 
-        #if account.exists():
-            #return Response({'message':'Este numero de cuenta ya se ha registrado'},
-                            #status = status.HTTP_400_BAD_REQUEST)
+        password = request.data['password']
+        password1 = request.data['password1']
 
-        return Response({'message':'Prueba'},status = status.HTTP_200_OK)
+        if password != password1:
+            return Response({'password':'Debe ingesar ambas contraseñas iguales'},
+                            status = status.HTTP_400_BAD_REQUEST)
 
-    def update(self,request,pk=None):
-        user = Usuario.objects.filter(id = pk).first()
-        user_serializer = UserSerializer(user,data = request.data)
-        if user_serializer.is_valid():
-                user_serializer.save()
-                return Response(user_serializer.data,status = status.HTTP_200_OK)
-        return Response(user_serializer.errors,status = status.HTTP_400_BAD_REQUEST)
+
+        new_user = Usuario(
+            email = email,
+            names = serializer.validated_data.get("names"),
+            last_names = serializer.validated_data.get("last_names")
+        )
+        new_user.set_password(request.data['password'])
+        new_user.save()
+
+        result = { 
+                "email": request.data['email'],
+                "names": request.data['names'],
+                "last_names": request.data['last_names']
+                #"password": make_password(request.data['password'])
+        }
+
+        return Response(result,status = status.HTTP_200_OK)
+
+    @action(detail = False, methods = ['put'], url_path = 'updateuser', url_name = 'updateuser')
+    def update_user(self, request):
+        serializer = UserUpdateSerializer(data = request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors,
+                            status = status.HTTP_400_BAD_REQUEST)
+
+        id_user = request.query_params.get("id_user")
+        user = Usuario.objects.filter(id=id_user).first()
+
+        if not user:
+            return Response({'message': 'No existe el usuario con id ' + id_user}, 
+                            status = status.HTTP_404_NOT_FOUND)                 
+
+        email = serializer.validated_data.get("email")
+        email_user = Usuario.objects.filter(email=email)
+
+        if email_user.exists():
+            return Response({'message':'Este correo electrónico ya se ha registrado'},
+                            status = status.HTTP_400_BAD_REQUEST)
+
+        user.email = email
+        user.names = request.data['names']
+        user.last_names = request.data['last_names']
+        user.set_password(request.data['password'])
+        user.save()
+
+        return Response(serializer.data,status = status.HTTP_200_OK)
 
     @action(detail = False, methods = ['delete'], url_path = 'deleteuser', url_name = 'deleteuser')
     def delete_user(self, request):
