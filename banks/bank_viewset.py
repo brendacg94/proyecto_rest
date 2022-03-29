@@ -70,10 +70,15 @@ class BankViewSet(viewsets.ViewSet):
 
         if not account:
             return Response({'message': 'No existe la cuenta con id ' + id_account}, status = status.HTTP_404_NOT_FOUND)
-       
+
+        movement = Movement.objects.filter(bank_account=id_account).order_by('-creation_movement').first()
+        
+        format = "%d/%m/%Y %H:%M:%S"
+        time = movement.creation_movement.strftime(format)
         result = { 
                 "account_number": account.account_number,
                 "balance": account.balance,
+                "last_movement":time,
                 "account_type": account.id_account_type.name,
                 "user_name": account.id_user.names,
                 "user_last_names": account.id_user.last_names,
@@ -298,6 +303,7 @@ class BankViewSet(viewsets.ViewSet):
             new_movement = Movement(
                 quantity = serializer.validated_data.get("quantity"),
                 movement_type = saved_movement_type,
+                available_balance = balance,
                 bank_account = saved_bank_account
             )
             new_movement.save()
@@ -316,14 +322,15 @@ class BankViewSet(viewsets.ViewSet):
             new_movement = Movement(
                 quantity = serializer.validated_data.get("quantity"),
                 movement_type = saved_movement_type,
+                available_balance = balance,
                 bank_account = saved_bank_account
             )
             new_movement.save()
 
         result = { 
-                "quantity": request.data['quantity'],
-                "movement_type": saved_movement_type.name,
                 "bank_account": saved_bank_account.account_number,
+                "movement_type": saved_movement_type.name,
+                "quantity": request.data['quantity'],
                 "balance": balance
         }
 
@@ -339,18 +346,21 @@ class BankViewSet(viewsets.ViewSet):
             return Response({'message': 'No existe la cuenta de banco con id ' + id_account}, 
                             status = status.HTTP_404_NOT_FOUND)
 
-        movements = Movement.objects.filter(bank_account=saved_account).select_related("movement_type","bank_account")
+        movements = Movement.objects.filter(bank_account=saved_account).order_by('-creation_movement').select_related("movement_type","bank_account")
         if not movements:
             return Response({'message': 'Esta cuenta de banco no tiene movimientos registrados'}, 
                             status = status.HTTP_404_NOT_FOUND)
-           
+
         result = { "movements": list() }
         for mov in movements:
+            format = "%d/%m/%Y %H:%M:%S"
+            time = mov.creation_movement.strftime(format)
             result["movements"].append({
-                "quantity": mov.quantity,
-                "creation_movement": mov.creation_movement,
+                "bank_account": mov.bank_account.account_number,
+                "creation_movement": time,
                 "movement_type": mov.movement_type.name,
-                "bank_account": mov.bank_account.account_number
+                "quantity": mov.quantity,
+                "available_balance": mov.available_balance
             })
 
         return Response(result, status = status.HTTP_200_OK)

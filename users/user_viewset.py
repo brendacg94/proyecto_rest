@@ -73,8 +73,8 @@ class UserViewSet(viewsets.ViewSet):
         result = { 
                 "email": request.data['email'],
                 "names": request.data['names'],
-                "last_names": request.data['last_names']
-                #"password": make_password(request.data['password'])
+                "last_names": request.data['last_names'],
+                "password": make_password(request.data['password'])
         }
 
         return Response(result,status = status.HTTP_200_OK)
@@ -101,13 +101,32 @@ class UserViewSet(viewsets.ViewSet):
             return Response({'message':'Este correo electrónico ya se ha registrado'},
                             status = status.HTTP_400_BAD_REQUEST)
 
-        user.email = email
-        user.names = request.data['names']
-        user.last_names = request.data['last_names']
-        user.set_password(request.data['password'])
+        if email:
+            user.email = email
+
+        names = serializer.validated_data.get("names")
+        if names:
+            user.names = names
+
+        last_names = serializer.validated_data.get("last_names")
+        if last_names:
+            user.last_names = last_names
+
+        password = serializer.validated_data.get("password")
+        if password:
+            user.password = make_password(password)
+            
         user.save()
 
-        return Response(serializer.data,status = status.HTTP_200_OK)
+        result = { 
+                "id": user.id,
+                "email": user.email,
+                "names": user.names,
+                "last_names": user.last_names,
+                "password": make_password(password)
+        }
+
+        return Response(result,status = status.HTTP_200_OK)
 
     @action(detail = False, methods = ['delete'], url_path = 'deleteuser', url_name = 'deleteuser')
     def delete_user(self, request):

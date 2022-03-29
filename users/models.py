@@ -45,6 +45,13 @@ class Usuario(AbstractBaseUser,  PermissionsMixin):
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['names','last_names']
 
+    class Meta:
+
+        permissions = (
+            ('is_teacher', ('Is Teacher')),
+            ('is_student', ('Is Student')),
+        )
+
     def __str__(self):
         return f'{self.names},{self.last_names}'
 
@@ -52,6 +59,8 @@ class Usuario(AbstractBaseUser,  PermissionsMixin):
     @property 
     def is_staff(self):
         return self.admin_user
+
+    
 
 
 
