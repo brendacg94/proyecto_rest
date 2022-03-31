@@ -67,6 +67,6 @@ class Movement(models.Model):
         verbose_name_plural = 'Movimientos'
 
     def __str__(self):
-        return self.quantity
+        return f'{self.quantity},{self.creation_movement},{self.available_balance}'
 
 

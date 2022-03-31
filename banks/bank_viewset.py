@@ -73,8 +73,13 @@ class BankViewSet(viewsets.ViewSet):
 
         movement = Movement.objects.filter(bank_account=id_account).order_by('-creation_movement').first()
         
-        format = "%d/%m/%Y %H:%M:%S"
-        time = movement.creation_movement.strftime(format)
+        if movement:
+            format = "%d/%m/%Y %H:%M:%S"
+            time = movement.creation_movement.strftime(format)
+
+        else:
+            time = "---"
+
         result = { 
                 "account_number": account.account_number,
                 "balance": account.balance,
